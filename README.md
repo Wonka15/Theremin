@@ -11,6 +11,13 @@ A touch- and motion-controlled virtual theremin and browser synthesizer. Built w
 - Full-screen performance mode for phones and tablets.
 - Settings saved locally in the browser; no audio or motion data is recorded or uploaded.
 
+## Project layout
+
+- `index.html` contains the accessible app structure.
+- `styles.css` contains responsive styling and performance-mode layout.
+- `app.js` contains the audio engine, controls, motion input, and local settings.
+- `test/app.test.js` contains dependency-free smoke and regression checks.
+
 ## Run locally
 
 Open `index.html` in a modern browser and press **Start Sound**. Web Audio requires a user gesture. Motion permission requires a compatible browser/device and is most reliable over HTTPS.
