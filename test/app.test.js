@@ -4,12 +4,10 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/i);
-assert.ok(scriptMatch, 'index.html should contain the application script');
-const script = scriptMatch[1];
+const script = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
 
-test('inline application JavaScript parses', () => {
-  assert.doesNotThrow(() => new vm.Script(script, { filename: 'index.html' }));
+test('application JavaScript parses', () => {
+  assert.doesNotThrow(() => new vm.Script(script, { filename: 'app.js' }));
 });
 
 test('literal DOM lookups resolve to existing element IDs', () => {
@@ -39,7 +37,9 @@ test('settings persist locally and performance mode is available', () => {
   assert.match(script, /localStorage\.setItem\(SETTINGS_KEY/);
   assert.match(script, /localStorage\.getItem\(SETTINGS_KEY/);
   assert.match(html, /id="performanceBtn"/);
-  assert.match(html, /--visual-intensity/);
+  assert.match(html, /href="\.\/styles\.css"/);
+  assert.match(html, /src="\.\/app\.js" defer/);
+  assert.match(readFileSync(new URL('../styles.css', import.meta.url), 'utf8'), /--visual-intensity/);
 });
 
 test('touch release respects the hold-position option', () => {
