@@ -29,6 +29,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;ma
 @media(max-width:800px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.status{font-size:.75rem}}
 @media(max-width:520px){.app{padding:13px}.controls{grid-template-columns:1fr}.readout{padding:11px}.fieldhead{align-items:flex-start;flex-direction:column;gap:4px}header{align-items:flex-start}.status{max-width:110px;text-align:right}#playfield{height:38svh;min-height:245px}.toolbar .tab{flex:1;padding:10px 7px;font-size:.82rem}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+#playfield .aim{opacity:var(--visual-intensity,.65)}#playfield.wave:after{opacity:calc(var(--visual-intensity,.65)*.23)}
 .performance-mode .app{position:fixed;inset:0;z-index:9999;width:100%;max-width:none;height:100svh;overflow:auto;margin:0;padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg)}
 .performance-mode .toolbar,.performance-mode .readouts,.performance-mode .controls,.performance-mode footer,.performance-mode #statusText{display:none!important}
 .performance-mode header{margin-bottom:10px}.performance-mode .brand p{display:none}.performance-mode .instrument{height:calc(100svh - 120px);display:flex;flex-direction:column}.performance-mode .fieldhead{padding:9px 12px}.performance-mode #playfield{height:auto;min-height:0;flex:1}.performance-mode .actions{margin-top:10px}.performance-mode .actions .btn{min-height:42px}
@@ -316,6 +317,7 @@ $('randomBtn').addEventListener('click',()=>{
 const SETTINGS_KEY='theremim.settings.v1';
 function saveSettings(){try{const settings={};document.querySelectorAll('.app input[id],.app select[id]').forEach(el=>{settings[el.id]=el.type==='checkbox'?el.checked:el.value});localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}catch(_){/* Storage may be unavailable in private browsing. */}}
 function restoreSettings(){try{const saved=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');for(const [id,value] of Object.entries(saved)){const el=$(id);if(!el||id==='preset')continue;if(el.type==='checkbox')el.checked=Boolean(value);else if(el.tagName==='SELECT'||el.type==='range')el.value=String(value)}$('style').dispatchEvent(new Event('change'));$('grid').dispatchEvent(new Event('change'));$('rings').dispatchEvent(new Event('change'));document.documentElement.style.setProperty('--visual-intensity',num('intensity')/100)}catch(_){/* Ignore malformed or unavailable local settings. */}}
+document.querySelectorAll('.app input[id],.app select[id]').forEach(el=>el.addEventListener('change',saveSettings));
 restoreSettings();updateReadout();
 })();
 </script>
