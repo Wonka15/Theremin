@@ -240,14 +240,14 @@ function updateEffects(){
  if(!ctx)return;
  const now=ctx.currentTime,fx=$('effectsOn').checked;
  filter.frequency.setTargetAtTime(num('filter'),now,.03);filter.Q.setTargetAtTime(num('resonance')/10,now,.03);
- const distortion=fx?num('distortion')/100:0;
+ const distortion=fx?num('distortion')/100*num('wet')/50:0;
  drive.curve=distortion===0?null:distortionCurve(distortion);
  const reverbAmount=fx?num('reverb')/100*num('wet')/50:0;
  // Avoid allocating a stereo impulse response until reverb is actually requested.
  if(reverbAmount>0&&!convolver.buffer)convolver.buffer=makeImpulse();
  wetGain.gain.setTargetAtTime(reverbAmount,now,.05);
- delay.delayTime.setTargetAtTime(num('delayTime')/1000,now,.03);delayGain.gain.setTargetAtTime(fx?num('delay')/100:0,now,.03);
- phaserDepthGains.forEach((gain,i)=>gain.gain.setTargetAtTime(fx?num('pDepth')*[3,6,10,15][i]:0,now,.03));phaserLfo.frequency.setTargetAtTime(num('pSpeed')/10,now,.03);
+ delay.delayTime.setTargetAtTime(num('delayTime')/1000,now,.03);delayGain.gain.setTargetAtTime(fx?num('delay')/100*num('wet')/50:0,now,.03);
+ phaserDepthGains.forEach((gain,i)=>gain.gain.setTargetAtTime(fx?num('pDepth')*num('wet')/50*[3,6,10,15][i]:0,now,.03));phaserLfo.frequency.setTargetAtTime(num('pSpeed')/10,now,.03);
  lfo.frequency.setTargetAtTime(num('vSpeed')/10,now,.03);lfoGain.gain.setTargetAtTime(num('vDepth'),now,.03);
  noiseGain.gain.setTargetAtTime(num('noiseMix')/100*.08,now,.03);
  filter.type='lowpass';filter.frequency.setTargetAtTime(num('filter'),now,.03);
