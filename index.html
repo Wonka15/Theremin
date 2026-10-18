@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090c16">
+<meta name="description" content="Theremim — a touch and motion controlled virtual theremin and web synthesizer.">
+<title>Theremim — Virtual Theremin</title>
+<style>
+:root{color-scheme:dark;--bg:#090c16;--panel:#121827;--panel2:#171f31;--line:#2b3850;--ink:#f1f5ff;--muted:#a5b2ca;--accent:#73f5e8;--accent2:#f18be8;--glow:rgba(115,245,232,.18)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#263553 0,var(--bg) 62%);color:var(--ink);font:15px/1.45 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+button,input,select{font:inherit}button,select,input[type=range],input[type=checkbox]{accent-color:var(--accent)}button{cursor:pointer}
+.app{width:min(1160px,100%);margin:auto;padding:clamp(14px,3vw,30px);padding-bottom:calc(26px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}.brand{display:flex;align-items:center;gap:12px}.logo{width:45px;height:45px;border:1px solid var(--accent);border-radius:14px;display:grid;place-items:center;color:var(--accent);font-size:1.5rem;box-shadow:0 0 28px var(--glow)}h1{font-size:clamp(1.5rem,5vw,2.3rem);letter-spacing:-.06em;margin:0;line-height:1}.brand p{margin:5px 0 0;color:var(--muted);font-size:.8rem}.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.82rem}.led{width:8px;height:8px;border-radius:50%;background:#65718a}.led.live{background:#6effb1;box-shadow:0 0 12px #6effb1}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tab,.btn{border:1px solid var(--line);border-radius:11px;background:#151d2e;color:var(--ink);padding:10px 14px;font-weight:700}.tab[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:var(--glow)}.btn.primary{background:var(--accent);color:#08121a;border-color:var(--accent)}.btn:disabled{opacity:.45}
+.instrument{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:linear-gradient(145deg,#141d2e,#0e1421);box-shadow:0 25px 75px #0005}.fieldhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line);color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.12em}
+#playfield{position:relative;height:clamp(260px,42vh,440px);overflow:hidden;touch-action:none;cursor:crosshair;background:radial-gradient(ellipse at var(--px,50%) var(--py,55%),var(--glow),transparent 40%),#0b1120}
+#playfield.grid:before{content:"";position:absolute;inset:0;background:linear-gradient(#26395255 1px,transparent 1px),linear-gradient(90deg,#26395255 1px,transparent 1px);background-size:32px 32px;pointer-events:none}
+#playfield.wave:after{content:"";position:absolute;inset:0;opacity:.15;background:repeating-radial-gradient(ellipse at 50% 50%,transparent 0 20px,var(--accent) 21px 22px,transparent 23px 40px);pointer-events:none}
+.aim{position:absolute;left:var(--px,50%);top:var(--py,55%);width:clamp(90px,18vw,156px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:1px solid var(--accent);box-shadow:0 0 26px var(--glow),inset 0 0 26px var(--glow);pointer-events:none}
+.aim:before,.aim:after{content:"";position:absolute;inset:14%;border:1px solid color-mix(in srgb,var(--accent2) 70%,transparent);border-radius:50%}.aim:after{inset:31%;border-color:var(--accent)}
+.cross{position:absolute;left:var(--px,50%);top:var(--py,55%);height:1px;width:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.25;pointer-events:none}.cross.v{height:100%;width:1px;left:var(--px,50%);top:0;background:linear-gradient(transparent,var(--accent),transparent)}
+.fieldhint{position:absolute;bottom:15px;left:10px;right:10px;text-align:center;color:#b8c8df;font-size:.82rem;text-shadow:0 1px 5px #000;pointer-events:none}
+.readouts{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line)}.readout{padding:13px 17px;min-width:0}.readout+.readout{border-left:1px solid var(--line)}.label{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:750}.big{font-size:clamp(1.3rem,4vw,2rem);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}.big small{font-size:.72rem;color:var(--muted);font-weight:500}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;min-width:0}.panel h2{font-size:.88rem;margin:0 0 13px;display:flex;align-items:center;justify-content:space-between}.pill{font-size:.66rem;color:var(--accent);border:1px solid #3c625f;border-radius:999px;padding:2px 7px;font-weight:650}
+.control{margin:12px 0}.control:first-of-type{margin-top:0}.control label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;color:#dbe5f8;font-size:.8rem}.control output{color:var(--accent);font-variant-numeric:tabular-nums}.control input[type=range]{width:100%;display:block;margin:0;min-height:24px}.control select,.select{width:100%;background:#0b1120;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px;min-height:40px}
+.checkrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;color:#dbe5f8;font-size:.8rem}.checks{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}.actions .btn{flex:1 1 auto;min-height:45px}.hidden{display:none!important}.panelset{margin-top:14px}.panelset[hidden]{display:none}
+#statusText{min-height:1.4em;color:var(--muted);font-size:.82rem;margin:12px 2px 0}footer{text-align:center;color:#7888a2;font-size:.75rem;margin-top:24px}
+@media(max-width:800px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.status{font-size:.75rem}}
+@media(max-width:520px){.app{padding:13px}.controls{grid-template-columns:1fr}.readout{padding:11px}.fieldhead{align-items:flex-start;flex-direction:column;gap:4px}header{align-items:flex-start}.status{max-width:110px;text-align:right}#playfield{height:38svh;min-height:245px}.toolbar .tab{flex:1;padding:10px 7px;font-size:.82rem}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+ <div class="brand"><div class="logo" aria-hidden="true">∿</div><div><h1>theremim</h1><p>TOUCH • MOTION • SYNTHESIS</p></div></div>
+ <div class="status"><span id="led" class="led"></span><span id="liveLabel">AUDIO STANDBY</span></div>
+</header>
+<nav class="toolbar" aria-label="Control categories">
+ <button class="tab" data-tab="scale" aria-pressed="true">Scale</button><button class="tab" data-tab="sound" aria-pressed="false">Sound</button><button class="tab" data-tab="effects" aria-pressed="false">Effects</button><button class="tab" data-tab="visuals" aria-pressed="false">Visuals</button>
+</nav>
+<section class="instrument">
+ <div class="fieldhead"><span>01 / Performance surface</span><span id="modeLabel">Touch control active</span></div>
+ <div id="playfield" class="grid wave" role="application" aria-label="Touch and drag here. Left to right controls pitch; top to bottom controls volume.">
+  <div class="cross"></div><div class="cross v"></div><div class="aim"></div>
+  <div class="fieldhint" id="fieldHint">Tap Start Sound, then move across the field</div>
+ </div>
+ <div class="readouts">
+  <div class="readout"><div class="label">Pitch / note</div><div class="big"><span id="freqRead">440</span> <small>Hz</small></div><div class="label" id="noteRead">A4</div></div>
+  <div class="readout"><div class="label">Output level</div><div class="big"><span id="volRead">0</span><small> %</small></div><div class="label">Master amplitude</div></div>
+  <div class="readout"><div class="label">Harmonic</div><div class="big" id="scaleRead">Chromatic</div><div class="label">Quantization</div></div>
+ </div>
+</section>
+<div class="actions">
+ <button class="btn primary" id="startBtn">▶ Start Sound</button><button class="btn" id="motionBtn">◎ Enable Motion</button><button class="btn" id="muteBtn" disabled>Ⅱ Mute</button><button class="btn" id="randomBtn">⤨ Randomize All</button>
+</div>
+<p id="statusText" role="status" aria-live="polite">Ready. Audio begins only after you press Start Sound.</p>
+<section id="set-scale" class="panelset">
+ <div class="controls">
+  <article class="panel"><h2>Quantization <span class="pill">PITCH</span></h2>
+   <div class="control"><label for="scale">Scale</label><select id="scale"><option value="chromatic">Chromatic</option><option value="major">Major</option><option value="minor">Natural minor</option><option value="pentatonic">Pentatonic</option><option value="blues">Blues</option><option value="dorian">Dorian</option><option value="whole">Whole tone</option></select></div>
+   <div class="control"><label for="root">Root note</label><select id="root"><option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">D♯ / E♭</option><option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7">G</option><option value="8">G♯ / A♭</option><option value="9" selected>A</option><option value="10">A♯ / B♭</option><option value="11">B</option></select></div>
+   <div class="control"><label for="glide">Glide <output id="glideOut">35 ms</output></label><input id="glide" type="range" min="0" max="500" value="35" step="5"></div>
+   <div class="control"><label for="range">Frequency range <output id="rangeOut">4 octaves</output></label><input id="range" type="range" min="1" max="6" value="4"></div>
+  </article>
+  <article class="panel"><h2>Harmony <span class="pill">VOICES</span></h2>
+   <div class="control"><label for="third">Third <output id="thirdOut">0%</output></label><input id="third" type="range" min="0" max="100" value="0"></div>
+   <div class="control"><label for="fifth">Fifth <output id="fifthOut">0%</output></label><input id="fifth" type="range" min="0" max="100" value="0"></div>
+   <div class="control"><label for="sub">Sub octave <output id="subOut">0%</output></label><input id="sub" type="range" min="0" max="100" value="0"></div>
+   <div class="control"><label for="harmonyMix">Harmony mix <output id="harmonyMixOut">30%</output></label><input id="harmonyMix" type="range" min="0" max="100" value="30"></div>
+  </article>
+  <article class="panel"><h2>Performance <span class="pill">PLAY</span></h2>
+   <div class="control"><label for="motionDepth">Motion sensitivity <output id="motionDepthOut">1.0×</output></label><input id="motionDepth" type="range" min="5" max="20" value="10"></div>
+   <div class="control"><label for="master">Master volume <output id="masterOut">35%</output></label><input id="master" type="range" min="0" max="100" value="35"></div>
+   <div class="checkrow"><label for="quantize">Snap notes to scale</label><input id="quantize" type="checkbox"></div>
+   <div class="checkrow"><label for="latch">Hold last touch position</label><input id="latch" type="checkbox" checked></div>
+  </article>
+ </div>
+</section>
+<section id="set-sound" class="panelset" hidden>
+ <div class="controls">
+  <article class="panel"><h2>Sound source <span class="pill">OSCILLATOR</span></h2>
+   <div class="control"><label for="wave">Waveform</label><select id="wave"><option value="sine">Sine</option><option value="square">Square</option><option value="sawtooth">Saw</option><option value="triangle">Triangle</option></select></div>
+   <div class="control"><label for="detune">Detune <output id="detuneOut">0 cents</output></label><input id="detune" type="range" min="-100" max="100" value="0"></div>
+   <div class="control"><label for="filter">Filter cutoff <output id="filterOut">5000 Hz</output></label><input id="filter" type="range" min="100" max="10000" value="5000" step="50"></div>
+   <div class="control"><label for="resonance">Resonance <output id="resonanceOut">0.7</output></label><input id="resonance" type="range" min="1" max="150" value="7"></div>
+  </article>
+  <article class="panel"><h2>Modulation <span class="pill">MOVEMENT</span></h2>
+   <div class="control"><label for="vDepth">Vibrato depth <output id="vDepthOut">0 cents</output></label><input id="vDepth" type="range" min="0" max="100" value="0"></div>
+   <div class="control"><label for="vSpeed">Vibrato speed <output id="vSpeedOut">5 Hz</output></label><input id="vSpeed" type="range" min="1" max="120" value="50"></div>
+   <div class="control"><label for="pSpeed">Phaser speed <output id="pSpeedOut">0.3 Hz</output></label><input id="pSpeed" type="range" min="1" max="40" value="3"></div>
+   <div class="control"><label for="pDepth">Phaser depth <output id="pDepthOut">0%</output></label><input id="pDepth" type="range" min="0" max="100" value="0"></div>
+  </article>
+  <article class="panel"><h2>Noise layer <span class="pill">TEXTURE</span></h2>
+   <div class="control"><label for="noiseMix">Noise mix <output id="noiseMixOut">0%</output></label><input id="noiseMix" type="range" min="0" max="100" value="0"></div>
+   <div class="control"><label for="noiseColor">Noise color</label><select id="noiseColor"><option value="white">White noise</option><option value="pink">Soft filtered noise</option></select></div>
+   <div class="control"><label for="octave">Oscillator octave</label><select id="octave"><option value="-1">-1 octave</option><option value="0" selected>Normal</option><option value="1">+1 octave</option></select></div>
+  </article>
+ </div>
+</section>
+<section id="set-effects" class="panelset" hidden>
+ <div class="controls">
+  <article class="panel"><h2>Space <span class="pill">AMBIENCE</span></h2>
+   <div class="control"><label for="reverb">Reverb <output id="reverbOut">15%</output></label><input id="reverb" type="range" min="0" max="100" value="15"></div>
+   <div class="control"><label for="delay">Echo mix <output id="delayOut">0%</output></label><input id="delay" type="range" min="0" max="60" value="0"></div>
+   <div class="control"><label for="delayTime">Echo time <output id="delayTimeOut">240 ms</output></label><input id="delayTime" type="range" min="80" max="700" value="240" step="10"></div>
+  </article>
+  <article class="panel"><h2>Drive <span class="pill">COLOR</span></h2>
+   <div class="control"><label for="distortion">Distortion <output id="distortionOut">0%</output></label><input id="distortion" type="range" min="0" max="100" value="0"></div>
+   <div class="control"><label for="wet">Effect intensity <output id="wetOut">50%</output></label><input id="wet" type="range" min="0" max="100" value="50"></div>
+   <div class="checkrow"><label for="effectsOn">Enable effects</label><input id="effectsOn" type="checkbox" checked></div>
+  </article>
+  <article class="panel"><h2>Safety & control <span class="pill">OUTPUT</span></h2>
+   <div class="control"><label for="limiter">Output ceiling <output id="limiterOut">−6 dB</output></label><input id="limiter" type="range" min="-24" max="0" value="-6"></div>
+   <p style="font-size:.8rem;color:var(--muted)">Start quietly, especially when using headphones. Browser and device volume controls remain active.</p>
+   <button class="btn" id="resetFx">Reset effects</button>
+  </article>
+ </div>
+</section>
+<section id="set-visuals" class="panelset" hidden>
+ <div class="controls">
+  <article class="panel"><h2>Visual style <span class="pill">LOOK</span></h2>
+   <div class="control"><label for="style">Style</label><select id="style"><option value="neon">Neon oscilloscope</option><option value="aurora">Aurora</option><option value="amber">Vintage amber</option><option value="ice">Ice blue</option><option value="mono">Monochrome</option></select></div>
+   <div class="control"><label for="intensity">Intensity <output id="intensityOut">65%</output></label><input id="intensity" type="range" min="10" max="100" value="65"></div>
+   <div class="checkrow"><label for="grid">Show grid</label><input id="grid" type="checkbox" checked></div>
+   <div class="checkrow"><label for="rings">Show rings</label><input id="rings" type="checkbox" checked></div>
+  </article>
+  <article class="panel"><h2>Motion input <span class="pill">SENSORS</span></h2>
+   <p style="font-size:.82rem;color:var(--muted)">Tilt left/right for pitch and tilt forward/back for volume. On iPhone and iPad, motion permission may need to be granted after tapping Enable Motion. Touch input always remains available.</p>
+   <button class="btn" id="recenter">◎ Recenter motion</button>
+  </article>
+  <article class="panel"><h2>Quick presets <span class="pill">SOUND</span></h2>
+   <div class="control"><label for="preset">Choose preset</label><select id="preset"><option value="theremin">Classic theremin</option><option value="dream">Dream shimmer</option><option value="radio">Vintage radio</option><option value="alien">Alien signal</option><option value="bell">Glass bells</option></select></div>
+   <button class="btn" id="loadPreset">Load preset</button>
+  </article>
+ </div>
+</section>
+<footer>THEREMIM • A browser-based instrument • No audio or motion data is recorded or uploaded.</footer>
+</main>
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const field=$('playfield');
+const names=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const scales={chromatic:[0,1,2,3,4,5,6,7,8,9,10,11],major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10],pentatonic:[0,2,4,7,9],blues:[0,3,5,6,7,10],dorian:[0,2,3,5,7,9,10],whole:[0,2,4,6,8,10]};
+let ctx=null, started=false, muted=false, pointerDown=false, motionEnabled=false, baseBeta=null, baseGamma=null;
+let x=.5,y=.55, oscillators=[], mainGain=null, master=null, filter=null, drive=null, dry=null, wetGain=null, convolver=null, delay=null, delayGain=null, lfo=null, lfoGain=null, phaserLfo=null, allpass=null, noiseSource=null, noiseGain=null;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const num=id=>Number($(id).value);
+function rootMidi(){return 48+num('root')}
+function rawFrequency(){return 110*Math.pow(2,x*num('range'))*Math.pow(2,num('octave'))}
+function quantizedFrequency(freq){
+ if(!$('quantize').checked)return freq;
+ const midi=69+12*Math.log2(freq/440), root=rootMidi(), allowed=scales[$('scale').value]||scales.chromatic;
+ let best=Math.round(midi),distance=Infinity;
+ for(let n=Math.floor(midi)-2;n<=Math.ceil(midi)+2;n++){
+  if(((n-root)%12+12)%12===0||allowed.includes(((n-root)%12+12)%12)){
+   const d=Math.abs(n-midi);if(d<distance){distance=d;best=n;}
+  }
+ }
+ return 440*Math.pow(2,(best-69)/12);
+}
+function currentFreq(){return clamp(quantizedFrequency(rawFrequency()),35,8000)}
+function noteName(freq){let midi=Math.round(69+12*Math.log2(freq/440));return names[(midi%12+12)%12]+(Math.floor(midi/12)-1)}
+function updateLabels(){
+ const mapping={glide:['glideOut',v=>v+' ms'],range:['rangeOut',v=>v+' octave'+(v==1?'':'s')],third:['thirdOut',v=>v+'%'],fifth:['fifthOut',v=>v+'%'],sub:['subOut',v=>v+'%'],harmonyMix:['harmonyMixOut',v=>v+'%'],motionDepth:['motionDepthOut',v=>(v/10).toFixed(1)+'×'],master:['masterOut',v=>v+'%'],detune:['detuneOut',v=>v+' cents'],filter:['filterOut',v=>v+' Hz'],resonance:['resonanceOut',v=>(v/10).toFixed(1)],vDepth:['vDepthOut',v=>v+' cents'],vSpeed:['vSpeedOut',v=>(v/10).toFixed(1)+' Hz'],pSpeed:['pSpeedOut',v=>(v/10).toFixed(1)+' Hz'],pDepth:['pDepthOut',v=>v+'%'],noiseMix:['noiseMixOut',v=>v+'%'],reverb:['reverbOut',v=>v+'%'],delay:['delayOut',v=>v+'%'],delayTime:['delayTimeOut',v=>v+' ms'],distortion:['distortionOut',v=>v+'%'],wet:['wetOut',v=>v+'%'],limiter:['limiterOut',v=>'−'+Math.abs(v)+' dB'],intensity:['intensityOut',v=>v+'%']};
+ for(const [id,[out,format]] of Object.entries(mapping))$(out).textContent=format(num(id));
+ $('scaleRead').textContent=$('scale').value==='chromatic'?'Chromatic':$('scale').selectedOptions[0].text;
+}
+function updateReadout(){
+ const hz=currentFreq(),vol=Math.round((1-y)*100);
+ $('freqRead').textContent=Math.round(hz);$('noteRead').textContent=noteName(hz);$('volRead').textContent=vol;
+ field.style.setProperty('--px',(x*100)+'%');field.style.setProperty('--py',(y*100)+'%');
+ if(started&&ctx){
+  const now=ctx.currentTime, glide=Math.max(.003,num('glide')/1000);
+  oscillators.forEach((o,i)=>{
+   let f=hz;
+   if(i===1)f=hz*Math.pow(2,4/12);if(i===2)f=hz*Math.pow(2,7/12);if(i===3)f=hz/2;
+   if(o.frequency)o.frequency.setTargetAtTime(f,now,glide);
+  });
+  if(mainGain)mainGain.gain.setTargetAtTime(muted?0:(1-y)*.28,now,.035);
+  if(master)master.gain.setTargetAtTime(muted?0:num('master')/100,now,.04);
+ }
+ updateLabels();
+}
+function makeImpulse(seconds=2.5,decay=2.5){
+ const length=Math.floor(ctx.sampleRate*seconds),buffer=ctx.createBuffer(2,length,ctx.sampleRate);
+ for(let c=0;c<2;c++){const d=buffer.getChannelData(c);for(let i=0;i<length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/length,decay)}
+ return buffer;
+}
+function distortionCurve(amount){
+ const n=44100,curve=new Float32Array(n),k=amount*180;
+ for(let i=0;i<n;i++){const v=i*2/n-1;curve[i]=amount===0?v:((3+k)*v*20*Math.PI/180)/(Math.PI+k*Math.abs(v))}
+ return curve;
+}
+function buildAudio(){
+ const AC=window.AudioContext||window.webkitAudioContext;
+ if(!AC){$('statusText').textContent='This browser does not support Web Audio.';return false}
+ ctx=new AC();
+ const oscBus=ctx.createGain();mainGain=ctx.createGain();filter=ctx.createBiquadFilter();filter.type='lowpass';
+ filter.frequency.value=num('filter');filter.Q.value=num('resonance')/10;
+ drive=ctx.createWaveShaper();drive.curve=distortionCurve(num('distortion')/100);drive.oversample='2x';
+ dry=ctx.createGain();convolver=ctx.createConvolver();convolver.buffer=makeImpulse();wetGain=ctx.createGain();
+ delay=ctx.createDelay(1.2);delay.delayTime.value=num('delayTime')/1000;delayGain=ctx.createGain();
+ allpass=ctx.createBiquadFilter();allpass.type='allpass';allpass.frequency.value=800;allpass.Q.value=1;
+ master=ctx.createGain();const limiter=ctx.createDynamicsCompressor();limiter.threshold.value=num('limiter');limiter.knee.value=6;limiter.ratio.value=12;limiter.attack.value=.003;limiter.release.value=.18;
+ oscBus.connect(mainGain);mainGain.connect(filter);filter.connect(drive);
+ drive.connect(dry);dry.connect(master);
+ drive.connect(convolver);convolver.connect(wetGain);wetGain.connect(master);
+ drive.connect(delay);delay.connect(delayGain);delayGain.connect(master);
+ drive.connect(allpass);allpass.connect(master);
+ master.connect(limiter);limiter.connect(ctx.destination);
+ oscillators=[];
+ for(let i=0;i<4;i++){
+  const o=ctx.createOscillator(),g=ctx.createGain();o.type=$('wave').value;
+  o.detune.value=i===0?num('detune'):0;g.gain.value=i===0?1:0;
+  o.connect(g);g.connect(oscBus);o.start();oscillators.push(o);o._voiceGain=g;
+ }
+ lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=num('vSpeed')/10;lfoGain=ctx.createGain();lfoGain.gain.value=num('vDepth');lfo.connect(lfoGain);lfoGain.connect(oscillators[0].frequency);lfo.start();
+ phaserLfo=ctx.createOscillator();phaserLfo.frequency.value=num('pSpeed')/10;const pg=ctx.createGain();pg.gain.value=0;phaserLfo.connect(pg);pg.connect(allpass.frequency);phaserLfo.start();allpass._lfoGain=pg;
+ // Noise is generated locally and never recorded or transmitted.
+ const noiseBuffer=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate),nd=noiseBuffer.getChannelData(0);
+ for(let i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*.5;
+ noiseSource=ctx.createBufferSource();noiseSource.buffer=noiseBuffer;noiseSource.loop=true;noiseGain=ctx.createGain();noiseGain.gain.value=0;noiseSource.connect(noiseGain);noiseGain.connect(filter);noiseSource.start();
+ updateEffects();return true;
+}
+function updateEffects(){
+ if(!ctx)return;
+ const now=ctx.currentTime,fx=$('effectsOn').checked;
+ filter.frequency.setTargetAtTime(num('filter'),now,.03);filter.Q.setTargetAtTime(num('resonance')/10,now,.03);
+ drive.curve=distortionCurve(fx?num('distortion')/100:0);
+ wetGain.gain.setTargetAtTime(fx?num('reverb')/100*num('wet')/50:0,now,.05);
+ delay.delayTime.setTargetAtTime(num('delayTime')/1000,now,.03);delayGain.gain.setTargetAtTime(fx?num('delay')/100:0,now,.03);
+ allpass._lfoGain.gain.setTargetAtTime(fx?num('pDepth')*15:0,now,.03);phaserLfo.frequency.setTargetAtTime(num('pSpeed')/10,now,.03);
+ lfo.frequency.setTargetAtTime(num('vSpeed')/10,now,.03);lfoGain.gain.setTargetAtTime(num('vDepth'),now,.03);
+ noiseGain.gain.setTargetAtTime(num('noiseMix')/100*.08,now,.03);
+ if($('noiseColor').value==='pink'){filter.type='lowpass';filter.frequency.setTargetAtTime(Math.min(num('filter'),1800),now,.03)}else filter.frequency.setTargetAtTime(num('filter'),now,.03);
+ const h=num('harmonyMix')/100;
+ oscillators.forEach((o,i)=>{if(o._voiceGain)o._voiceGain.gain.setTargetAtTime(i===0?1:(num(['third','fifth','sub'][i-1])/100)*h,now,.04)});
+ if(master)master.gain.setTargetAtTime(muted?0:num('master')/100,now,.04);
+}
+async function startAudio(){
+ if(!ctx&&!buildAudio())return;
+ try{await ctx.resume()}catch(e){}
+ started=ctx.state==='running';
+ if(started){$('led').classList.add('live');$('liveLabel').textContent='AUDIO LIVE';$('startBtn').textContent='✓ Sound Running';$('muteBtn').disabled=false;$('fieldHint').textContent='Drag horizontally for pitch • vertically for volume';$('statusText').textContent='Sound is live. Begin gently and keep your listening volume comfortable.';updateReadout();updateEffects()}
+ else $('statusText').textContent='Audio could not start. Tap Start Sound again.';
+}
+function pointer(e){const r=field.getBoundingClientRect();x=clamp((e.clientX-r.left)/r.width,0,1);y=clamp((e.clientY-r.top)/r.height,0,1);updateReadout()}
+field.addEventListener('pointerdown',e=>{pointerDown=true;try{field.setPointerCapture(e.pointerId)}catch(_){}pointer(e)});
+field.addEventListener('pointermove',e=>{if(pointerDown)pointer(e)});
+field.addEventListener('pointerup',()=>{pointerDown=false});field.addEventListener('pointercancel',()=>{pointerDown=false});
+$('startBtn').addEventListener('click',startAudio);
+$('muteBtn').addEventListener('click',()=>{muted=!muted;$('muteBtn').textContent=muted?'▶ Unmute':'Ⅱ Mute';updateReadout();updateEffects()});
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));document.querySelectorAll('.panelset').forEach(p=>p.hidden=p.id!=='set-'+btn.dataset.tab)}));
+$('motionBtn').addEventListener('click',async()=>{
+ if(!('DeviceOrientationEvent'in window)){$('statusText').textContent='Motion sensors are not available here; touch mode still works.';return}
+ try{if(typeof DeviceOrientationEvent.requestPermission==='function'){const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted')throw Error('Motion permission was not granted.')}
+ motionEnabled=true;baseBeta=null;baseGamma=null;window.addEventListener('deviceorientation',orientation);$('motionBtn').textContent='✓ Motion Enabled';$('modeLabel').textContent='Motion control active';$('statusText').textContent='Tilt gently to play. Touching the field still works.'}
+ catch(e){$('statusText').textContent=e.message||'Could not enable motion. Check device permissions.'}
+});
+function orientation(e){if(!motionEnabled||e.beta==null||e.gamma==null)return;if(baseBeta===null){baseBeta=e.beta;baseGamma=e.gamma}
+ const sensitivity=num('motionDepth')/10;x=clamp(.5+(e.gamma-baseGamma)/70*sensitivity,0,1);y=clamp(.55+(e.beta-baseBeta)/70*sensitivity,0,1);updateReadout()}
+$('recenter').addEventListener('click',()=>{baseBeta=null;baseGamma=null;$('statusText').textContent='Motion reference reset. Hold the device in your preferred neutral position.'});
+function bindRange(id,fn){$(id).addEventListener('input',()=>{updateReadout();if(fn)fn()})}
+['glide','range','third','fifth','sub','harmonyMix','motionDepth','master','detune','filter','resonance','vDepth','vSpeed','pSpeed','pDepth','noiseMix','reverb','delay','delayTime','distortion','wet','limiter','intensity'].forEach(id=>bindRange(id,updateEffects));
+['scale','root','quantize','octave'].forEach(id=>$(id).addEventListener('change',updateReadout));
+$('wave').addEventListener('change',()=>{oscillators.forEach(o=>o.type=$('wave').value)});
+$('noiseColor').addEventListener('change',updateEffects);$('effectsOn').addEventListener('change',updateEffects);
+$('filter').addEventListener('input',()=>{if(filter)filter.frequency.setTargetAtTime(num('filter'),ctx.currentTime,.03)});
+$('style').addEventListener('change',()=>{
+ const s=$('style').value,root=document.documentElement;
+ const themes={neon:['#73f5e8','#f18be8','#090c16'],aurora:['#a6ff91','#8d9cff','#09151b'],amber:['#ffc46b','#ff8d55','#17100a'],ice:['#8acbff','#c2eaff','#07121f'],mono:['#f0f4ff','#aab5c8','#101116']};
+ const t=themes[s];root.style.setProperty('--accent',t[0]);root.style.setProperty('--accent2',t[1]);root.style.setProperty('--bg',t[2]);root.style.setProperty('--glow',t[0]+'2e');
+});
+$('grid').addEventListener('change',()=>field.classList.toggle('grid',$('grid').checked));
+$('rings').addEventListener('change',()=>document.querySelector('.aim').style.display=$('rings').checked?'block':'none');
+function resetEffects(){[['reverb',15],['delay',0],['distortion',0],['wet',50],['delayTime',240],['pSpeed',3],['pDepth',0],['vDepth',0],['vSpeed',50],['noiseMix',0]].forEach(([id,v])=>$(id).value=v);$('effectsOn').checked=true;updateReadout();updateEffects()}
+$('resetFx').addEventListener('click',resetEffects);
+const presets={
+ theremin:{wave:'sine',filter:5000,resonance:7,vDepth:0,vSpeed:50,reverb:12,delay:0,distortion:0,third:0,fifth:0,sub:0,noiseMix:0,scale:'chromatic',quantize:false},
+ dream:{wave:'sine',filter:3500,resonance:8,vDepth:22,vSpeed:28,reverb:58,delay:22,distortion:0,third:24,fifth:12,sub:0,noiseMix:0,scale:'pentatonic',quantize:true},
+ radio:{wave:'triangle',filter:1400,resonance:18,vDepth:3,vSpeed:35,reverb:8,delay:0,distortion:16,third:0,fifth:0,sub:0,noiseMix:8,scale:'chromatic',quantize:false},
+ alien:{wave:'sawtooth',filter:2200,resonance:22,vDepth:55,vSpeed:85,reverb:32,delay:25,distortion:30,third:20,fifth:35,sub:12,noiseMix:4,scale:'whole',quantize:true},
+ bell:{wave:'sine',filter:6500,resonance:4,vDepth:2,vSpeed:65,reverb:45,delay:18,distortion:0,third:35,fifth:25,sub:0,noiseMix:0,scale:'major',quantize:true}
+};
+function loadPreset(key){const p=presets[key];if(!p)return;for(const [id,v] of Object.entries(p)){if($(id)){if($(id).type==='checkbox')$(id).checked=v;else $(id).value=v}}updateReadout();updateEffects();$('statusText').textContent='Loaded preset: '+key+'.';}
+$('loadPreset').addEventListener('click',()=>loadPreset($('preset').value));
+$('randomBtn').addEventListener('click',()=>{
+ const pick=(id,arr)=>$(id).value=arr[Math.floor(Math.random()*arr.length)];
+ pick('wave',['sine','triangle','sawtooth','square']);pick('scale',['chromatic','major','minor','pentatonic','blues','dorian','whole']);pick('root',[0,2,4,5,7,9,11]);
+ ['third','fifth','sub','vDepth','pDepth','noiseMix','delay','distortion'].forEach(id=>$(id).value=Math.floor(Math.random()*61));
+ $('reverb').value=10+Math.floor(Math.random()*61);$('filter').value=700+Math.floor(Math.random()*7000);$('vSpeed').value=15+Math.floor(Math.random()*90);$('quantize').checked=Math.random()>.35;
+ $('style').value=['neon','aurora','amber','ice','mono'][Math.floor(Math.random()*5)];$('style').dispatchEvent(new Event('change'));updateReadout();updateEffects();$('statusText').textContent='A new sound palette is ready.'});
+updateReadout();
+})();
+</script>
+</body>
+</html>
