@@ -1,4 +1,4 @@
-# Theremim
+# Theremin
 
 A touch- and motion-controlled virtual theremin and browser synthesizer. Built with plain HTML, CSS, and the Web Audio API—no framework or build step required.
 
